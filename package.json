@@ -3,16 +3,20 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@reach/router": "^1.2.1",
     "@types/jest": "24.0.16",
     "@types/node": "12.6.8",
     "@types/ramda": "^0.26.18",
+    "@types/reach__router": "^1.2.4",
     "@types/react": "16.8.23",
     "@types/react-dom": "16.8.5",
+    "@types/styled-components": "^4.1.18",
     "prando": "^5.1.1",
     "ramda": "^0.26.1",
     "react": "^16.8.6",
     "react-dom": "^16.8.6",
     "react-scripts": "3.0.1",
+    "styled-components": "^4.3.2",
     "typescript": "3.5.3"
   },
   "scripts": {

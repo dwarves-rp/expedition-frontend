@@ -8,7 +8,6 @@ export const rollNumberBetween = R.curry((rng: Prando, minMax: minMax) =>
   rng.nextInt(minMax.min, minMax.max)
 )
 
-// getDamageFromWeapon :: Weapon A -> [Int, Int]
 export const getDamageFromWeapon = (weapon: WeaponEntry) => ({
   min: weapon.damage.min,
   max: weapon.damage.max

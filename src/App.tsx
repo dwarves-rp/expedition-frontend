@@ -5,6 +5,7 @@ import ApolloClient from 'apollo-boost'
 import styled from 'styled-components'
 
 import Home from './pages/Home'
+import NewDwarf from './pages/NewDwarf'
 
 const PageContainer = styled.main`
   display: flex;
@@ -13,7 +14,7 @@ const PageContainer = styled.main`
 `
 
 const client = new ApolloClient({
-  uri: 'http://localhost:4000'
+  uri: 'http://localhost:4000/graphql'
 })
 
 const App: React.FC = () => {
@@ -22,6 +23,7 @@ const App: React.FC = () => {
       <PageContainer>
         <Router>
           <Home path="/" />
+          <NewDwarf path="/new-dwarf" />
         </Router>
       </PageContainer>
     </ApolloProvider>

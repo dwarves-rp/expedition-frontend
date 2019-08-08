@@ -154,6 +154,7 @@ const getNonPermanentConDamage = R.compose(
 )
 
 const getTempMaxHits = (dwarf: Dwarf) => {
+  console.log(dwarf)
   const conDamage = getNonPermanentConDamage(dwarf.wounds)
   return getMaxHits(dwarf.attributes.siz, dwarf.attributes.con - conDamage)
 }

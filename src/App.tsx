@@ -10,7 +10,13 @@ import NewDwarf from './pages/NewDwarf'
 const PageContainer = styled.main`
   display: flex;
   min-height: 1vh;
-  justify-content: center;
+
+  align-items: center;
+  flex-direction: column;
+`
+
+const Header = styled.div`
+  display: flex;
 `
 
 const client = new ApolloClient({
@@ -21,6 +27,10 @@ const App: React.FC = () => {
   return (
     <ApolloProvider client={client}>
       <PageContainer>
+        <Header>
+          <Link to="/">Home</Link>
+          <Link to="/new-dwarf">New Dwarf</Link>
+        </Header>
         <Router>
           <Home path="/" />
           <NewDwarf path="/new-dwarf" />

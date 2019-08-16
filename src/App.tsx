@@ -6,6 +6,7 @@ import styled from 'styled-components'
 
 import Home from './pages/Home'
 import NewDwarf from './pages/NewDwarf'
+import Test from './pages/Test'
 
 const PageContainer = styled.main`
   display: flex;
@@ -30,10 +31,12 @@ const App: React.FC = () => {
         <Header>
           <Link to="/">Home</Link>
           <Link to="/new-dwarf">New Dwarf</Link>
+          <Link to="/test">Test</Link>
         </Header>
         <Router>
           <Home path="/" />
           <NewDwarf path="/new-dwarf" />
+          <Test path="/test" />
         </Router>
       </PageContainer>
     </ApolloProvider>

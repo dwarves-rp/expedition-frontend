@@ -2,7 +2,7 @@ import React from 'react'
 import { Dwarf, Wound } from '../types/dwarf'
 import styled, { css } from 'styled-components'
 import grave from '../images/hasty-grave.png'
-import * as R from 'ramda'
+import * as _ from 'lodash/fp'
 
 type DwarfListItemProps = {
   dwarf: Dwarf
@@ -108,10 +108,10 @@ function getMaxHits(siz: number, con: number): number {
   return Math.floor((siz + con) / 2) + 5
 }
 
-const getMaxHitsFromDwarf = R.converge(getMaxHits, [
-  R.path(['attributes', 'siz']),
-  R.path(['attributes', 'con'])
-])
+const getMaxHitsFromDwarf = _.pipe(
+  _.over([_.path(['attributes', 'siz']), _.path(['attributes', 'con'])]),
+  _.spread(getMaxHits)
+)
 
 function getHealthBarColor(current: number, maximum: number): string {
   if (current / maximum >= 0.8) return 'rgb(43, 194, 83)'
@@ -120,10 +120,10 @@ function getHealthBarColor(current: number, maximum: number): string {
   return '#00000'
 }
 
-const getHealthBarColorFromDwarf = R.converge(getHealthBarColor, [
-  R.prop('currentHits'),
-  getMaxHitsFromDwarf
-])
+const getHealthBarColorFromDwarf = _.pipe(
+  _.over([_.prop('currentHits'), getMaxHitsFromDwarf]),
+  _.spread(getHealthBarColor)
+)
 
 function getHealthPercentageAsString(current: number, maximum: number): string {
   const percentage = current / maximum
@@ -132,9 +132,9 @@ function getHealthPercentageAsString(current: number, maximum: number): string {
   return `${naturalPercentage}%`
 }
 
-const getHealthPercentageAsStringFromDwarf = R.converge(
-  getHealthPercentageAsString,
-  [R.prop('currentHits'), getMaxHitsFromDwarf]
+const getHealthPercentageAsStringFromDwarf = _.pipe(
+  _.over([_.prop('currentHits'), getMaxHitsFromDwarf]),
+  _.spread(getHealthPercentageAsString)
 )
 
 function getConDamagePercentageAsString(
@@ -146,11 +146,11 @@ function getConDamagePercentageAsString(
   return `${100 - naturalPercentage}%`
 }
 
-const getNonPermanentConDamage = R.compose(
-  R.sum,
-  R.map(R.prop('damage')),
-  R.filter<Wound>(R.propEq('attribute', 'con')),
-  R.filter<Wound>(R.propEq('permanent', false))
+const getNonPermanentConDamage = _.pipe(
+  _.filter(_.propEq('permanent', false)),
+  _.filter(_.propEq('attribute', 'con')),
+  _.map(_.prop('damage')),
+  _.sum
 )
 
 const getTempMaxHits = (dwarf: Dwarf) => {

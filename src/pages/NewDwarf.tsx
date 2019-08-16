@@ -22,6 +22,17 @@ export default function NewDwarf(props: NewDwarfProps) {
   const [name, setName] = useState('')
   const [gender, setGender] = useState('male')
   const [profession, setProfession] = useState(professions[0].slug)
+  const [attributes, updateAttributes] = useImmer<{
+    [key: string]: Attribute
+  }>({
+    str: { base: 10, value: 0, rollLabel: 'Effort' },
+    con: { base: 14, value: 0, rollLabel: 'Stamina' },
+    siz: { base: 8, value: 0, rollLabel: '' },
+    int: { base: 10, value: 0, rollLabel: 'Idea' },
+    pow: { base: 10, value: 0, rollLabel: 'Luck/Will' },
+    dex: { base: 10, value: 0, rollLabel: 'Agility' },
+    app: { base: 12, value: 0, rollLabel: 'Charisma' }
+  })
 
   return (
     <div>
@@ -35,10 +46,29 @@ export default function NewDwarf(props: NewDwarfProps) {
         setProfession={setProfession}
       />
       <h1>Attributes</h1>
-      <Attributes />
+      <Attributes attributes={attributes} updateAttributes={updateAttributes} />
       <h1>Vitals</h1>
+      <Vitals attributes={attributes} />
       <h1>Skills</h1>
     </div>
+  )
+}
+
+interface Attribute {
+  base: number
+  value: number
+  rollLabel: string
+}
+
+function Vitals({ attributes }: { attributes: { [key: string]: Attribute } }) {
+  return (
+    <>
+      <TextField
+        value={getMaxHitsFromAttributes(attributes)}
+        disabled
+        label="Maximum Hits"
+      />
+    </>
   )
 }
 
@@ -58,11 +88,27 @@ const Label = styled.div``
 const Base = styled.div``
 const Cell = styled.div``
 
-interface Attribute {
-  base: number
-  value: number
-  rollLabel: string
+const getMaxHits = (siz: number, con: number) => {
+  return Math.ceil((siz + con) / 2) + 5
 }
+
+const getAttributeTotal = R.converge(R.add, [
+  getAttributeBase,
+  getAttributeValue
+])
+
+const getAttribute = (attrString: string) =>
+  R.compose(
+    getAttributeTotal,
+    R.prop<string, Attribute>(attrString)
+  )
+
+const getMaxHitsFromAttributes: (attributes: {
+  [key: string]: Attribute
+}) => number = R.converge(getMaxHits, [
+  getAttribute('siz'),
+  getAttribute('con')
+])
 
 function getAttributeBase(attribute: { base: number; value: number }) {
   return attribute.base
@@ -72,24 +118,12 @@ function getAttributeValue(attribute: { base: number; value: number }) {
   return attribute.value
 }
 
-const getAttributeTotal = R.converge(R.add, [
-  getAttributeBase,
-  getAttributeValue
-])
+interface AttributesProps {
+  attributes: { [key: string]: Attribute }
+  updateAttributes: (d: (draft: { [key: string]: Attribute }) => void) => void
+}
 
-function Attributes() {
-  const [attributes, updateAttributes] = useImmer<{
-    [key: string]: Attribute
-  }>({
-    str: { base: 10, value: 0, rollLabel: 'Effort' },
-    con: { base: 14, value: 0, rollLabel: 'Stamina' },
-    siz: { base: 8, value: 0, rollLabel: '' },
-    int: { base: 10, value: 0, rollLabel: 'Idea' },
-    pow: { base: 10, value: 0, rollLabel: 'Luck/Will' },
-    dex: { base: 10, value: 0, rollLabel: 'Agility' },
-    app: { base: 12, value: 0, rollLabel: 'Charisma' }
-  })
-
+function Attributes({ attributes, updateAttributes }: AttributesProps) {
   const onChangeAttribute = (attrString: string, value: number) => {
     updateAttributes(draft => {
       draft[attrString].value = value

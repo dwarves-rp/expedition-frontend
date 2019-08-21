@@ -11,11 +11,12 @@ import {
   AttributeData,
   HealthDiff
 } from '../models/types'
+import diff from 'jest-diff'
 
 interface TestProps {
   path: string
 }
-export default function Test(props: TestProps) {
+export default function TestCombat(props: TestProps) {
   const [dwarf, updateDwarf] = useImmer<Dwarf>({
     name: 'Test Boy',
     profession: ProfessionSlug.BREWER,
@@ -36,16 +37,17 @@ export default function Test(props: TestProps) {
       hits: { slug: VitalSlug.HITS, value: 16 },
       pow: { slug: VitalSlug.POW, value: 16 },
       san: { slug: VitalSlug.SANITY, value: 16 }
-    }
+    },
+    skills: {}
   })
 
   const inflictHit = () => {
     updateDwarf((dwarf: Dwarf) => {
       dwarf.health.push({
         description: 'Deep Cut',
-        regenRate: 0,
+        regenRate: 1,
         affects: VitalSlug.HITS,
-        value: -1
+        value: -2
       })
     })
   }
@@ -54,13 +56,49 @@ export default function Test(props: TestProps) {
     updateDwarf((dwarf: Dwarf) => {
       dwarf.health.push({
         description: 'Poisoned',
-        regenRate: 0,
+        regenRate: 1,
         affects: AttributeSlug.CON,
-        value: -1
+        value: -10
       })
     })
   }
 
+  const inflictPermConDamage = () => {
+    updateDwarf((dwarf: Dwarf) => {
+      dwarf.health.push({
+        description: 'Missing Limb',
+        regenRate: 0,
+        affects: AttributeSlug.CON,
+        value: -2
+      })
+    })
+  }
+
+  const tickRecovery = () => {
+    updateDwarf((dwarf: Dwarf) => {
+      /* Recover Attribute Wounds First */
+
+      dwarf.health.forEach((diff, index) => {
+        if (Object.values(AttributeSlug).includes(diff.affects as any)) {
+          dwarf.health[index].value += diff.regenRate
+        }
+      })
+      dwarf.health.forEach((diff, index) => {
+        const totalHits = getTotalHits(dwarf)
+        const rawMaxHits = getRawMaxHits(dwarf)
+        const totalMaxHits = getTotalMaxHits(dwarf)
+
+        if (Object.values(VitalSlug).includes(diff.affects as any)) {
+          if (totalHits >= totalMaxHits) return
+          const regenRate = Math.min(diff.regenRate, totalMaxHits - totalHits)
+          dwarf.health[index].value += regenRate
+        }
+      })
+
+      dwarf.health = dwarf.health.filter(diff => diff.value !== 0)
+    })
+  }
+  console.log(dwarf.health)
   return (
     <>
       <h1>Testing Ground</h1>
@@ -70,11 +108,13 @@ export default function Test(props: TestProps) {
         <li>Profession - {getProfessionLabel(dwarf.profession)}</li>
         <li>Age - {dwarf.age}</li>
         <li>Gender - {getGenderLabel(dwarf.gender)}</li>
-        <li>Base Max Hits - {getRawMaxHits(dwarf)}</li>
+        <li>Base Max Hits - {getNaturalMaxHits(dwarf)}</li>
       </ul>
       <h3>Actions</h3>
       <button onClick={inflictHit}>Inflict Hit</button>
       <button onClick={inflictConDamage}>Inflict Con Damage</button>
+      <button onClick={inflictPermConDamage}>Inflict Perm Con Damage</button>
+      <button onClick={tickRecovery}>Tick Recovery</button>
       <h4>Health</h4>
       <div>
         Hits - ({getTotalHits(dwarf)}/{getTotalMaxHits(dwarf)})
@@ -105,6 +145,17 @@ function getTotalVitalDamage(
   }, 0)
 }
 
+function getTotalPermAttributeDamage(
+  healthDiffs: HealthDiff[],
+  attribute: AttributeSlug
+): number {
+  return healthDiffs.reduce((acc, diff) => {
+    if (diff.affects === attribute && diff.regenRate === 0)
+      return acc + diff.value
+    return acc
+  }, 0)
+}
+
 function getTotalAttributeDamage(
   healthDiffs: HealthDiff[],
   attribute: AttributeSlug
@@ -117,8 +168,8 @@ function getTotalAttributeDamage(
 
 function getTotalHits(dwarf: Dwarf): number {
   const totalHitsDamage = getTotalVitalDamage(dwarf.health, VitalSlug.HITS)
-  const totalRawMaxHits = getRawMaxHits(dwarf)
-  return Math.min(totalRawMaxHits + totalHitsDamage, getTotalMaxHits(dwarf))
+  const totalRawMaxHits = getNaturalMaxHits(dwarf)
+  return totalRawMaxHits + totalHitsDamage
 }
 
 function getTotalMaxHits(dwarf: Dwarf): number {
@@ -138,6 +189,17 @@ function getTotalMaxHits(dwarf: Dwarf): number {
 }
 
 function getRawMaxHits(dwarf: Dwarf): number {
+  const totalPermConDamage = getTotalPermAttributeDamage(
+    dwarf.health,
+    AttributeSlug.CON
+  )
+  const rawCon = getAttributeRaw(dwarf.attributes.con)
+  const rawSiz = getAttributeRaw(dwarf.attributes.siz)
+  const totalCon = rawCon + totalPermConDamage
+  return Math.floor((totalCon + rawSiz) / 2) + 5
+}
+
+function getNaturalMaxHits(dwarf: Dwarf): number {
   const rawCon = getAttributeRaw(dwarf.attributes.con)
   const rawSiz = getAttributeRaw(dwarf.attributes.siz)
   return Math.floor((rawCon + rawSiz) / 2) + 5
